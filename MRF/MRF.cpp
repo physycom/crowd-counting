@@ -21,6 +21,7 @@ This code is modified from the following paper
 #include <math.h>
 #include <assert.h>
 #include <cstring>
+#include <algorithm>
 #include "mex.h"
 #include "image.h"
 #include "misc.h"
