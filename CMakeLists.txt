@@ -1,0 +1,24 @@
+cmake_minimum_required (VERSION 3.10)
+project (MRF)
+set(target_name "MRF")
+# make sure that the default is a RELEASE
+set(default_build_type "Release")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+      STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+find_package(Matlab COMPONENTS MX_LIBRARY REQUIRED)
+find_package(OpenMP REQUIRED)
+
+if(MSVC)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4146 /wd4305 /wd4334 /wd4267")
+endif()
+
+matlab_add_mex(NAME ${target_name} SRC ${target_name}/${target_name}.cpp)
+
+install(TARGETS ${target_name} DESTINATION ${CMAKE_SOURCE_DIR}/${target_name}/)

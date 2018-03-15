@@ -15,7 +15,8 @@ If you find this code useful in your research, please cite:
 ### Prepare
 
 0. Downloading data at https://www.dropbox.com/sh/garodovussfijta/AAABTgM_Ut19Be4kGzHqf6MUa?dl=0 or https://pan.baidu.com/s/1gfjcdbX and put it at the root folder of the project.
-0. Compiling the MRF code by running testMRF.m in MRF folder.
+0. Compiling the MRF code using CMake by running the file CMakeLists.txt in the root folder.
+0. Finishing setup by running testMRF.m in MRF folder.
 
 ### Evalute
 

@@ -1,9 +1,9 @@
-mex MRF.cpp
+%mex MRF.cpp
 
 clear all
 clc
 
-% p is a local counts matrix that gets from the regression network 
+% p is a local counts matrix that gets from the regression network
 p = imread('p.pgm');
 
 %options = single([DISC_K DATA_K LAMBDA]);
