@@ -25,8 +25,8 @@ You can direct evalute the model's performance by running EvaluteUCF.m or Evalua
 ### Training a new model
 If you want to train a new regress model, follow these steps:
 
-0. Installing MatConvNet and then runing ExtractFeatures.m to extract features. This step is not necessary if you use the extracted features in the data folder.
-0. Installing Keras and runing regress_UCF.py or regress_SHT.py to train a new regress network. Also, you can run patch_predict_SHT.py or patch_predict_UCF.py to predict the patches' count using trained regress network.
+0. Install MatConvNet and then run ExtractFeatures.m to extract features. This step is not necessary if you use the extracted features in the data folder.
+0. Install Keras and run regress_UCF.py or regress_SHT.py to train a new regress network. Also, you can run patch_predict_SHT.py or patch_predict_UCF.py to predict the patches' count using trained regress network.
 0. Running EvaluteUCF.m or EvaluateSHT.m to evalute the model's performance.
 
 ### Results
@@ -48,8 +48,8 @@ If you want to train a new regress model, follow these steps:
 
 	<table>
 	    	<tr>
-			<td colspan="2">Part_A</td> 
-			<td colspan="2">Part_B</td> 
+			<td colspan="2">Part_A</td>
+			<td colspan="2">Part_B</td>
 	   	</tr>
 	    	<tr>
 			<td>MAE</td>

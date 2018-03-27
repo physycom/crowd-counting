@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.10)
 project (MRF)
 set(target_name "MRF")
+
 # make sure that the default is a RELEASE
 set(default_build_type "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
