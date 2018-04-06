@@ -30,22 +30,23 @@ const char sep = '/';
 #include <assert.h>
 #endif
 
+#define MULTI_CHANNELS
 #define ITER 5      // number of BP iterations at each scale
 #define LEVELS 5     // number of scales
 #define VALUES 400   // number of possible graylevel values
 
 constexpr float INF = std::numeric_limits<float>::infinity(); 
 
-void msg(const float &s1[VALUES], const float &s2[VALUES],
-         const float &s3[VALUES], const float &s4[VALUES],
-         const float &dst[VALUES])
+void msg(const float s1[VALUES], const float s2[VALUES],
+         const float s3[VALUES], const float s4[VALUES],
+         float dst[VALUES], const float DISC_K)
 {
     for(int value = 0; value < VALUES; ++value) dst[value] = s1[value] + s2[value] + s3[value] + s4[value];
-    float minimum = *std::min_element(dst, dts + VALUES),
+    float minimum = *std::min_element(dst, dst + VALUES),
           s,
           *z = new float[VALUES+1];
     int k = 0,
-        *v = new float[VALUES];
+        *v = new int[VALUES];
     // dt function
     for(int q = 1; q <= VALUES-1; ++q)
     {
@@ -72,23 +73,20 @@ void msg(const float &s1[VALUES], const float &s2[VALUES],
     std::transform(dst, dst + VALUES, dst,
                    [&s](const float &d)
                    {
-                    return d - val;
+                    return d - s;
                    });
     return;
 }
 
-cv::Mat MRF(const cv::Mat &img, const float *options)
+int* MRF(const int *img, const int &height, const int &width, const float *options)
 {
-    int height = img.size().height,
-        width  = img.size().width,
-        best,
-        new_height, new_width;
+    int best,
+        new_height, new_width,
+        *out = new int[width*height];
     float best_val, val,
-          DISC_K = options[0];// 3000.0; // truncation of discontinuity cost
-          DATA_K = options[1];// 1000.0; // truncation of data cost
+          DISC_K = options[0],// 3000.0; // truncation of discontinuity cost
+          DATA_K = options[1],// 1000.0; // truncation of data cost
           LAMBDA = options[2];// 1.0; // weighting of data cost
-
-    cv::Mat out(width, height, CV_32FC1);
     
     image<float[VALUES]> *u[LEVELS]; // up
     image<float[VALUES]> *d[LEVELS]; // down
@@ -101,23 +99,23 @@ cv::Mat MRF(const cv::Mat &img, const float *options)
     for(int y = 0; y < height; ++y)
         for(int x = 0; x < width; ++x)
             for(int value = 0; value < VALUES; ++value)
-                imRef(data[0], x, y)[value] = LAMBDA * std::min( (img.at<float>(x, y) - value)*(img.at<float>(x, y) - value) , DATA_K); 
+                imRef(data[0], x, y)[value] = LAMBDA * std::min( float(img[x*width + y] - value)*(img[x*width + y] - value), DATA_K); 
     // ======================================================
 
     // data pyramid
 #pragma omp parallel for private(new_width, new_height)
     for(int i = 1; i < LEVELS; ++i)
     {
-        new_width = (int)std::ceil(data[i-1]->width() / 2.f);
-        new_height = (int)std::ceil(data[i-1]->height() / 2.f);
+        new_width = (int)std::ceil(data[i-1]->width / 2.f);
+        new_height = (int)std::ceil(data[i-1]->height / 2.f);
 
 #ifdef DEBUG
         assert(new_width >= 1);
         assert(new_height >= 1);
 #endif
         data[i] = new image<float[VALUES]>(new_width, new_height);
-        for (int y = 0; y < data[i-1]->height(); ++y)
-            for (int x = 0; x < data[i-1]->width(); ++x)
+        for (int y = 0; y < data[i-1]->height; ++y)
+            for (int x = 0; x < data[i-1]->width; ++x)
                 for (int value = 0; value < VALUES; ++value)
                     imRef(data[i], x/2, y/2)[value] += imRef(data[i-1], x, y)[value];
 
@@ -126,8 +124,8 @@ cv::Mat MRF(const cv::Mat &img, const float *options)
     // belief propagation using checkerboard update scheme
 
     // run bp from coarse to fine
-    new_width = data[LEVELS - 1]->width();
-    new_height = data[LEVELS - 1]->height();
+    new_width = data[LEVELS - 1]->width;
+    new_height = data[LEVELS - 1]->height;
     // in the coarsest level messages are initialized to zero
     u[LEVELS - 1] = new image<float[VALUES]>(new_width, new_height);
     d[LEVELS - 1] = new image<float[VALUES]>(new_width, new_height);
@@ -138,16 +136,16 @@ cv::Mat MRF(const cv::Mat &img, const float *options)
         for(int y = 1; y < new_height - 1; ++y)
             for(int x = ((y + t) % 2) + 1; x < new_width - 1; x += 2)
             {
-                msg(imRef(u, x, y+1),imRef(d, x, y-1),imRef(r, x-1, y), imRef(data, x, y), imRef(r, x, y));
-                msg(imRef(u, x, y+1),imRef(d, x, y-1),imRef(l, x+1, y), imRef(data, x, y), imRef(l, x, y));
-                //msg(u.at<float>(x, y+1), d.at<float>(x, y-1), r.at<float>(x-1, y), data.at<float>(x, y), r.at<float>(x, y));
-                //msg(u.at<float>(x, y+1), d.at<float>(x, y-1), l.at<float>(x+1, y), data.at<float>(x, y), l.at<float>(x, y));
+                msg(imRef(u[LEVELS - 1], x, y+1), imRef(d[LEVELS - 1], x, y-1), imRef(r[LEVELS - 1], x-1, y), imRef(data[LEVELS - 1], x, y), imRef(r[LEVELS - 1], x, y), DISC_K);
+                msg(imRef(u[LEVELS - 1], x, y+1), imRef(d[LEVELS - 1], x, y-1), imRef(l[LEVELS - 1], x+1, y), imRef(data[LEVELS - 1], x, y), imRef(l[LEVELS - 1], x, y), DISC_K);
+                //msg(u.at<float>(x, y+1), d.at<float>(x, y-1), r.at<float>(x-1, y), data.at<float>(x, y), r.at<float>(x, y), DISC_K);
+                //msg(u.at<float>(x, y+1), d.at<float>(x, y-1), l.at<float>(x+1, y), data.at<float>(x, y), l.at<float>(x, y), DISC_K);
             }
 
     for(int i = LEVELS-2; i >= 0; --i)
     {
-        new_width = data[i]->width();
-        new_height = data[i]->height();
+        new_width = data[i]->width;
+        new_height = data[i]->height;
         // initialize messages from values of previous level
         u[i] = new image<float[VALUES]>(width, height, false);
         d[i] = new image<float[VALUES]>(width, height, false);
@@ -175,10 +173,10 @@ cv::Mat MRF(const cv::Mat &img, const float *options)
             for(int y = 1; y < new_height - 1; ++y)
                 for(int x = ((y + t) % 2) + 1; x < new_width - 1; x += 2)
                 {
-                    msg(imRef(u, x, y+1),imRef(d, x, y-1),imRef(r, x-1, y), imRef(data, x, y), imRef(r, x, y));
-                    msg(imRef(u, x, y+1),imRef(d, x, y-1),imRef(l, x+1, y), imRef(data, x, y), imRef(l, x, y));
-                    //msg(u.at<float>(x, y+1), d.at<float>(x, y-1), r.at<float>(x-1, y), data.at<float>(x, y), r.at<float>(x, y));
-                    //msg(u.at<float>(x, y+1), d.at<float>(x, y-1), l.at<float>(x+1, y), data.at<float>(x, y), l.at<float>(x, y));
+                    msg(imRef(u[i], x, y + 1), imRef(d[i], x, y - 1), imRef(r[i], x - 1, y), imRef(data[i], x, y), imRef(r[i], x, y), DISC_K);
+                    msg(imRef(u[i], x, y + 1), imRef(d[i], x, y - 1), imRef(l[i], x + 1, y), imRef(data[i], x, y), imRef(l[i], x, y), DISC_K);
+                    //msg(u.at<float>(x, y+1), d.at<float>(x, y-1), r.at<float>(x-1, y), data.at<float>(x, y), r.at<float>(x, y), DISC_K);
+                    //msg(u.at<float>(x, y+1), d.at<float>(x, y-1), l.at<float>(x+1, y), data.at<float>(x, y), l.at<float>(x, y), DISC_K);
                 }
     }
 
@@ -189,18 +187,18 @@ cv::Mat MRF(const cv::Mat &img, const float *options)
         {
             best = 0;
             best_val = INF;
-            for(int value = 0; value < VALUES; ++values)
+            for(int value = 0; value < VALUES; ++value)
             {
-                val = imRef(l, x+1, y)[value] + //l[0]->at<cv::Vec3b>(x+1, y)[value] +
-                      imRef(r, x-1, y)[value] + //r[0]->at<cv::Vec3b>(x-1, y)[value] +
-                      imRef(data, x,y)[value];  //data[0]->at<cv::Vec3b>(x,y)[value];
+                val = imRef(l[0], x+1, y)[value] + //l[0]->at<cv::Vec3b>(x+1, y)[value] +
+                      imRef(r[0], x-1, y)[value] + //r[0]->at<cv::Vec3b>(x-1, y)[value] +
+                      imRef(data[0], x,y)[value];  //data[0]->at<cv::Vec3b>(x,y)[value];
                 if(val < best_val)
                 {
                     best_val = val;
                     best = value;
                 }
             }
-            out.at<float>(x, y) = best;
+            out[x*width + y] = best;
         }
 
     delete u[0];
@@ -274,30 +272,43 @@ void dumpFeature(const std::string &filename, Feature *feature, const int &n)
     return;
 }
 
-float* Evaluate(float *MRFParams, Feature* features, const int &n)
+float* Evaluate(const float* predictions, 
+                const int *width, 
+                const int *height, 
+                const int &n, 
+                const float *MRFParams)//, const float *ground)
 {   
-    float *finalcount = new float[n];
-    cv::Mat p;
-#pragma omp parallel for
-    for(int i = 0; i < n; ++i)
+    float *finalcount = new float[n],
+          *p = nullptr,
+          *tmp = nullptr;
+    int k = 0;
+
+#pragma omp parallel for reduction(+:k)
+    for(int i = 0; i < n; ++i) // loop over patches
     {
-
-
         // The marginal data of the predicted count matrix is 0 after apply MRF, 
         // so first extending the predicted count matrix by copy marginal data.
+        p = new float[height[i] * width[i]];
+        // compute the transpose
+        for(int ii = 0; ii < height[i]; ++ii)
+            for(int jj = 0; jj < width[i]; ++jj)
+                p[jj*height[i] + ii] = predictions[k + ii*width[i] + jj];
+        std::memcpy(p, predictions + k, sizeof(float)*height[i]*width[i]);
+        // miss add border
 
-
+        k += height[i] * width[i];
         // apply MRF
-        p = MRF(MRFParams, p);
+        //p = MRF(p, height[i], width[i], MRFParams);
         // FinalCount function
         finalcount[i] = 0.f;
-        for(int i = 0; i < Nrow; ++i)
-            for(int j = 0; j < Ncol; ++j)
-                finalcount[i] += (j == Ncol - 1 && !(Nrow % 2)) ? p[i][j] * .5f : 
-                                 (i == Nrow - 1 && !(Ncol % 2)) ? p[i][j] * .5f : /*WRONG???*/
-                                 (i % 2) ? 0.f :
+        for(int j = 0; j < height[i]; ++j)
+            for(int k = 0; k < width[i]; ++k)
+                finalcount[i] += (k == width[i]  - 1 && !(height[i] % 2)) ? p[j*width[i] + k] * .5f : 
+                                 (j == height[i] - 1 && !(width[i] % 2))  ? p[j*width[i] + k] * .5f :
                                  (j % 2) ? 0.f :
-                                 p[i][j];
+                                 (k % 2) ? 0.f :
+                                 p[j*width[i] + k];
+        delete[] p;
     }
     //float MAE = std::inner_product(finalcount, finalcount + n, ground,
     //                               0.f, std::plus<float>(),
@@ -315,7 +326,6 @@ float* Evaluate(float *MRFParams, Feature* features, const int &n)
     //          << "MSE: " << MSE << std::endl;
     return finalcount;
 }
-
 
 inline std::vector<std::string> files_in_directory(const std::string &directory)
     {
@@ -377,6 +387,7 @@ void ExtractFeatures(const std::string &imagesPath,
         cv::Mat im_r; // dst image
         cv::resize(im, im_r, newSize); //resize image
         im.release();
+#ifndef MULTI_CHANNELS
         if(im_r.channels() == 1)
         {
             std::vector<cv::Mat> channels(3);
@@ -385,7 +396,7 @@ void ExtractFeatures(const std::string &imagesPath,
             channels[2] = im_r;
             cv::merge(channels, im_r);
         }
-
+#endif
         features[i] = Feature(newHeight / 50 - 1, newWindth / 50 - 1, 1000);
 #ifndef MULTI_IMAGE
 #pragma omp parallel for
