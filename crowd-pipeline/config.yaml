@@ -1,0 +1,15 @@
+
+n_cpu: '1'
+folders:
+  imagesPath: ''
+  GroundPath: ''
+  model_dir: 'model'
+
+params:
+  winStep: 100
+  xStep: 50
+  yStep: 50
+  hStep: 50
+  wStep: 50
+
+modelname: 'model_venice'

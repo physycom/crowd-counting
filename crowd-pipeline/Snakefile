@@ -1,0 +1,144 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Apr  6 17:55:31 2018
+
+@author: nico
+"""
+# snakemake                             # to run
+# snakemake --force clear               # to force rule
+# snakemake -n                          # check workflow
+# REMEMBER REMEMBER : pipe in powershell wraps the object into utf-16 char set (avoid it...evil!)
+# WIN32 :=  cmd /C "snakemake --dag | dot -Tpdf > workflow.pdf"
+# UNIX  :=  snakemake --dag | dot -Tpdf > workflow.pdf
+
+# read GroundTruth
+import pandas as pd
+# train keras prediction NN with resnet152 features extraction
+import numpy as np
+from resnet152 import ResNet152
+from keras.applications.imagenet_utils import preprocess_input
+from keras.models import Sequential
+from keras.layers import Dense
+
+configfile: "config.yaml"
+
+sep             =   os.sep
+local           =   os.path.abspath(".")
+
+imagesPath      =   os.path.join(local, config["folders"]["imagesPath"])
+groundPath      =   os.path.join(local, config["folders"]["GroundPath"])
+model_dir       =   os.path.join(local, config["folders"]["model_dir"])
+train_file      =   [f for f in os.listdir(imagesPath) if os.path.isfile(os.path.join(imagesPath, f))]
+gt_file         =   [f for f in os.listdir(groundPath) if os.path.isfile(os.path.join(groundPath, f))]
+winStep         =   int(config["params"]["winStep"])
+xStep           =   int(config["params"]["xStep"])
+yStep           =   int(config["params"]["yStep"])
+HeightStep      =   int(config["params"]["hStep"])
+WidthStep       =   int(config["params"]["wStep"])
+OutModel        =   config["modelname"]
+
+rule all:
+    input:
+        model_sht   = os.path.join(local, model_dir, OutModel + "SHT.json"),
+        model_ucf   = os.path.join(local, model_dir, OutModel + "UCF.json"),
+        weights_sht = os.path.join(local, model_dir, OutModel + "SHT.h5"),
+        weights_ucf = os.path.join(local, model_dir, OutModel + "UCF.h5"),
+
+rule ExtractFeatures:
+    input:
+        images = expand(os.path.join(local, imagesPath, "{im}"), im=train_file),
+        ground = expand(os.path.join(local, groundPath, "{counts}"), counts=gt_file),
+    message:
+        "Features extraction on dataset"
+    benchmark:
+        os.path.join("benchmark", "benchmark_extract_features.dat")
+    output:
+        features = os.path.join(local, "features", "train_features"),
+        counts   = os.path.join(local, "features", "train_counts"),
+    run:
+        features   = np.empty(shape=(len(images), ), dtype=np.object)
+        counts     = np.empty(shape=(len(images), ), dtype=np.object)
+        base_model = ResNet152(weights='imagenet', large_input=True)
+        model      = Model(inputs=base_model.input, outputs=base_model.get_layer('fc1000').output)
+        for (i, f), g in zip(enumerate(images), ground):
+            im = cv2.imread(f)
+            locations = pd.read_csv(g, sep=",", index_col=0)
+            height, width, channel = im.shape
+            newHeight = int(np.round(height / HeightStep) * 50)
+            newWidth  = int(np.round(width / WidthStep) * 50)
+            locations[:, 0] /= width * newWidth
+            locations[:, 1] /= height * newHeight
+            im.resize((newHeight, newWidth, channel))
+            if channel == 1:  im = np.merge((im, im, im))
+            
+            Y = np.arange(0, newHeight, winStep)
+            X = np.arange(0, newWidth, winStep)
+            features[i] = np.empty(shape=(int(newHeight / HeightStep) - 1, int(newWidth / WidthStep) - 1, 1000), dtype=np.float)
+            counts[i]   = np.empty(shape=(int(newHeight / HeightStep) - 1, int(newWidth / WidthStep) - 1), dtype=np.int)
+            for row, y in enumerate(Y):
+                for column, x in enumerate(X):
+                    features[i][row, column, :] = model.predict( np.expand_dims( preprocess_input( cv2.resize(
+                                                                                                                im[y : y + winStep, x : x + winStep].astype(np.float64), 
+                                                                                                                model.input_shape[1:3]) ), 
+                                                                                axis=0 ) )
+                    counts[i][row, column] = len(locations[(locations.X > x - .5) & (locations.X < x + winStep + .5) & (locations.Y > y - .5) & (locations.Y < y + winStep + .5)])
+        features = np.concatenate(features, axis=1)
+        np.save(output.features, features)
+        np.save(output.counts, counts)
+
+rule RegressSHT:
+    input:
+        features = os.path.join(local, "features", "train_features"),
+        counts   = os.path.join(local, "features", "train_counts"),
+    message:
+        "Regress model for features prediction"
+    benchmark:
+        os.path.join("benchmark", "benchmark_regress.dat")
+    output:
+        model   = os.path.join(local, model_dir, OutModel + "SHT.json"),
+        weights = os.path.join(local, model_dir, OutModel + "SHT.h5"),
+    run:
+        features = np.load(input.features)
+        counts   = np.load(input.counts)
+
+        model2 = Sequential()
+        model2.add(Dense(100, input_dim=1000))
+        model2.add(Dense(100))
+        model2.add(Dense(50, activation='relu'))
+        model2.add(Dense(50, activation='relu'))
+        model2.add(Dense(1, activation='relu'))
+        model2.compile(optimizer='Adam',
+                       loss='mean_squared_error',
+                       metrics=['mean_absolute_error'])
+        model2.fit(features, counts, epochs=15, batch_size=1000)
+        # Save model 
+        with open(model_out + ".json", "w") as json_file: json_file.write(model.to_json())
+        model2.save_weights(model_out + ".h5")
+
+rule RegressUCF:
+    input:
+        features = os.path.join(local, "features", "train_features"),
+        counts   = os.path.join(local, "features", "train_counts"),
+    message:
+        "Regress model for features prediction"
+    benchmark:
+        os.path.join("benchmark", "benchmark_regress.dat")
+    output:
+        model   = os.path.join(local, model_dir, OutModel + "UCF.json"),
+        weights = os.path.join(local, model_dir, OutModel + "UCF.h5"),
+    run:
+        features = np.load(input.features)
+        counts   = np.load(input.counts)
+
+        model2 = Sequential()
+        model2.add(Dense(100, input_dim=1000, activation='relu'))
+        model2.add(Dense(50, activation='relu'))
+        model2.add(Dense(1, activation='relu'))
+
+        model2.compile(optimizer='Adam',
+                        loss='mean_squared_error',
+                        metrics=['mean_absolute_error'])
+        model2.fit(features, counts, epochs=100, batch_size=100, validation_split=0.1)
+        # Save model 
+        with open(model_out + ".json", "w") as json_file: json_file.write(model.to_json())
+        model2.save_weights(model_out + ".h5")
