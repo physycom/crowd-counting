@@ -1,0 +1,3 @@
+[submodule "SHT_CCD"]
+	path = SHT_CCD
+	url = https://github.com/cenit/SHT_CCD
