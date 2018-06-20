@@ -2,7 +2,8 @@
 
 if [[ "$1" == "" ]]
 then
-	echo "Usage : $(basename $0) path/to/image"
+  echo "Usage : $(basename $0) path/to/image"
+  exit 1
 fi
 
 echo "Processing : $1"
