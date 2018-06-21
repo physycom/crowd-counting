@@ -4,8 +4,7 @@ build/
 *.mat
 *.asv
 .DS_Store
-*.mexw64
-*.mexmaci64
+*.mex*
 *.exp
 *.lib
 .vscode/
@@ -27,3 +26,6 @@ bld/
 [Oo]bj/
 .snakemake/
 benchmark/
+
+# Data
+*_*.json
