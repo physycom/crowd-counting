@@ -29,3 +29,6 @@ benchmark/
 
 # Data
 *_*.json
+=======
+*.jpg
+*.png
