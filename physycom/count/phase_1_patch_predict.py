@@ -4,8 +4,8 @@ import scipy.io as sci
 import sys
 from keras.models import model_from_json
 
-if len(sys.argv) < 2:
-	print("Usage : %s path/to/phase_0/mat")
+if len(sys.argv) != 3:
+	print("Usage : %s path/to/phase_0/mat path/to/model/basename")
 	exit(1)
 
 inputmat = sys.argv[1]
@@ -14,17 +14,17 @@ n = int(test_data['features'].size/1000)
 X_test = test_data['features'].reshape(n, 1000)
 print("Data loaded...")
 
-# load trained model from disk
-json_file = open('../model/model_B_SHT.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-model = model_from_json(loaded_model_json)
+# load model
+modelbasename = sys.argv[2]
+with open(modelbasename + ".json", 'r') as mod:
+	modj = mod.read()
+model = model_from_json(modj)
 
-# load weights into new model
-model.load_weights("../model/model_B_SHT.h5")
+# load weights
+model.load_weights(modelbasename + ".h5")
 model.compile(optimizer='Adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
 print("Model loaded...")
 
+# prediction
 predictions = model.predict(X_test, batch_size=1000, verbose=0)
-output = inputmat.split(".")[0] + ".phase_1.mat"
-sci.savemat(output, {'predictions':predictions})
+sci.savemat(inputmat.split(".")[0] + ".phase_1.mat", {'predictions':predictions})
