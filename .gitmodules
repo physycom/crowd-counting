@@ -1,3 +1,6 @@
 [submodule "SHT_CCD"]
 	path = SHT_CCD
 	url = https://github.com/cenit/SHT_CCD
+[submodule "UCF_CCD"]
+	path = UCF_CCD
+	url = https://github.com/cenit/UCF_CCD
