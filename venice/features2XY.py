@@ -10,10 +10,7 @@
 import numpy as np 
 
 def features2XY(features, counts):
-    n = 0
-    for c in counts:
-        n = n + c.size
-
+    n = sum([c.size for c in counts])
     X = np.zeros((n, 1000))
     Y = np.zeros((n, 1))
     k = 0

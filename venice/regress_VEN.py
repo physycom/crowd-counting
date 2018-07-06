@@ -13,7 +13,6 @@ import numpy as np
 import scipy.io as sci
 from features2XY import features2XY
 
-
 train_data_dir = 'features_VENICE.mat'
 test_data_dir = 'features_VENICE.mat'
 
@@ -49,5 +48,5 @@ model_json = model.to_json()
 with open("model_VEN.json", "w") as json_file: json_file.write(model_json)
 # serialize weights to HDF5
 model.save_weights("model_VEN.h5")
-print("Saved model to disk")
+
 

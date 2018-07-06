@@ -11,5 +11,5 @@ Set-Location build
 
 # cmake -T"LLVM-vs2015" -G "Visual Studio 15" "-DCMAKE_BUILD_TYPE=Release" ..
 cmake -G "Ninja" "-DCMAKE_BUILD_TYPE=Release" ..
-cmake --build . #--config Release
+cmake --build . --target install #--config Release
 Set-Location ..

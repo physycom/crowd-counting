@@ -30,15 +30,16 @@ for i = 1 : n
     
     newHeight = round(height/50) * 50;
     newWidth = round(width/50) * 50;
-
+%    figure(1);
+%    imshow(im)
     im = imresize(im, [newHeight, newWidth]);
+%    figure(2);
+%    imshow(im)
     if channel == 1
-        tmp = zeros(newHeight, newWidth, 3);
-        tmp(:, :, 1) = im;
-        tmp(:, :, 2) = im;
-        tmp(:, :, 3) = im;
-        im = tmp;
+        im=cat(3,im(:, :, 1),im(:, :, 2),im(:, :, 3));
     end
+%    figure(3);
+%    imshow(im)
     
     y = 1;
     row = 1;

@@ -5,6 +5,7 @@ from keras.optimizers import SGD
 import numpy as np
 import scipy.io as sci
 import numpy as np
+import platform
 
 # convert features and counts matrix to the format of X, Y
 # input
@@ -29,13 +30,28 @@ def features2XY(features, counts):
 
   return X, Y
 
-#%%
-data_mat = '/mnt/e/Alessandro/Peoplebox/new/peoplebox_crowd_dataset/dataset_tiny.mat'
-#data_mat = r'E:\Alessandro\Peoplebox\new\peoplebox_crowd_dataset\dataset_tiny.mat'
+#%% Detect OS and populate pref
+osname = platform.system()
+if osname == "Windows":                 # windows
+  pref = "E:/"
+elif osname == "Linux":
+  with open('/proc/version', 'r') as f:
+    if 'microsoft' in f.read().lower(): # wsl
+      pref = "/mnt/e/"
+    else:                               # linux
+      pref = ""
+elif osname == "Darwin":                # macos
+  pref = ""
+else:
+  pref = ""
+
+
+#%% Load features and gt counts
+data_mat = pref + 'Alessandro/Peoplebox/new/peoplebox_crowd_dataset/dataset_tiny.mat'
 data = sci.loadmat(data_mat)
 
 # for debugging only reduce dataset size
-subsample = 400 # int(0.1*len(data['counts'].shape[1]))
+subsample = 4 # int(0.1*len(data['counts'].shape[1]))
 data['counts'] = data['counts'][:,:subsample]
 data['features'] = data['features'][:,:subsample]
 
@@ -69,25 +85,23 @@ if model_tag == "5strati":
   model.add(Dense(50, activation='relu'))
   model.add(Dense(1, activation='relu'))
   model.compile(optimizer='Adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
+  model.fit(X_train, Y_train, epochs=15, batch_size=1000)
 elif model_tag == "3strati":
   model = Sequential()
   model.add(Dense(100, input_dim=1000, activation='relu'))
   model.add(Dense(50, activation='relu'))
   model.add(Dense(1, activation='relu'))
   model.compile(optimizer='Adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
+  model.fit(X_train, Y_train, epochs=100, batch_size=1000, validation_split=0.25, verbose=0)
+print("**** Model summmary\n",model.summary())
 
-print(model.summary())
-
-# train model
-model.fit(X_train, Y_train, epochs=15, batch_size=1000, validation_split=0.25, verbose=0)
 result = model.evaluate(X_train, Y_train, batch_size=200, verbose=1, sample_weight=None)
-print(result)
+print("**** Evaluation result on TRAIN\n",result)
 result = model.evaluate(X_test, Y_test, batch_size=200, verbose=1, sample_weight=None)
-print(result)
+print("**** Evaluation result on TEST\n",result)
 
 # dump model and weights
-model_basename = '/mnt/e/Alessandro/Codice/crowd-counting/physycom/model/model_' + model_tag
-#model_basename = r'E:\Alessandro\Codice\crowd-counting\physycom\train\model_' + model_tag
+model_basename = pref + 'Alessandro/Codice/crowd-counting/physycom/model/model_' + model_tag
 model_json = model.to_json()
 with open(model_basename + ".json", "w") as json_file:
   json_file.write(model_json)

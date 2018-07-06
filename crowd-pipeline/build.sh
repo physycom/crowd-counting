@@ -11,6 +11,6 @@ cd build
 
 #sudo apt-get install ninja-build
 cmake -G "Ninja" "-DCMAKE_BUILD_TYPE=Release" ..
-cmake --build .
+cmake --build . --target install
 cd ..
 

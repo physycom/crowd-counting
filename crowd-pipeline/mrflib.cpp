@@ -14,7 +14,9 @@
 #define LEVELS 5     // number of scales
 #define VALUES 400   // number of possible graylevel values
 
-constexpr float INF = std::numeric_limits<float>::infinity(); 
+constexpr float INF = std::numeric_limits<float>::infinity();
+extern "C"
+{
 
 void msg(const float s1[VALUES], const float s2[VALUES],
          const float s3[VALUES], const float s4[VALUES],
@@ -57,7 +59,7 @@ void msg(const float s1[VALUES], const float s2[VALUES],
     return;
 }
 
-int* MRF(const float *img, const int &height, const int &width, const float *options)
+__declspec(dllexport) int* MRF(const float *img, const int height, const int width, const float *options)
 {
     int best,
         new_height, new_width,
@@ -66,7 +68,7 @@ int* MRF(const float *img, const int &height, const int &width, const float *opt
           DISC_K = options[0],// 3000.0; // truncation of discontinuity cost
           DATA_K = options[1],// 1000.0; // truncation of data cost
           LAMBDA = options[2];// 1.0; // weighting of data cost
-    
+
     image<float[VALUES]> *u[LEVELS]; // up
     image<float[VALUES]> *d[LEVELS]; // down
     image<float[VALUES]> *l[LEVELS]; // left
@@ -78,7 +80,7 @@ int* MRF(const float *img, const int &height, const int &width, const float *opt
     for(int y = 0; y < height; ++y)
         for(int x = 0; x < width; ++x)
             for(int value = 0; value < VALUES; ++value)
-                imRef(data[0], x, y)[value] = LAMBDA * std::min( float(img[x*width + y] - value)*(img[x*width + y] - value), DATA_K); 
+                imRef(data[0], x, y)[value] = LAMBDA * std::min( float(img[x*width + y] - value)*(img[x*width + y] - value), DATA_K);
     // ======================================================
 
     // data pyramid
@@ -190,12 +192,12 @@ int* MRF(const float *img, const int &height, const int &width, const float *opt
 }
 
 
-float* Evaluate(const float* predictions, 
-                const int *height, 
-                const int *width, 
-                const int &n, 
+__declspec(dllexport) float* Evaluate(const float* predictions,
+                const int *height,
+                const int *width,
+                const int n,
                 const float *MRFParams)//, const float *ground)
-{   
+{
     float *finalcount = new float[n],
           *p = nullptr;
     int k = 0,
@@ -204,7 +206,7 @@ float* Evaluate(const float* predictions,
 #pragma omp parallel for reduction(+:k)
     for(int i = 0; i < n; ++i) // loop over patches
     {
-        // The marginal data of the predicted count matrix is 0 after apply MRF, 
+        // The marginal data of the predicted count matrix is 0 after apply MRF,
         // so first extending the predicted count matrix by copy marginal data.
         p = new float[height[i] * width[i]];
         // compute the transpose
@@ -221,7 +223,7 @@ float* Evaluate(const float* predictions,
         finalcount[i] = 0.f;
         for(int j = 0; j < height[i]; ++j)
             for(int k = 0; k < width[i]; ++k)
-                finalcount[i] += (k == width[i]  - 1 && !(height[i] % 2)) ? out[j*width[i] + k] * .5f : 
+                finalcount[i] += (k == width[i]  - 1 && !(height[i] % 2)) ? out[j*width[i] + k] * .5f :
                                  (j == height[i] - 1 && !(width[i] % 2))  ? out[j*width[i] + k] * .5f :
                                  (j % 2) ? 0.f :
                                  (k % 2) ? 0.f :
@@ -235,7 +237,7 @@ float* Evaluate(const float* predictions,
     //                                  return std::abs(fc - gt);
     //                              }) / n,
     //    MSE = std::inner_product(finalcount, finalcount + n, ground,
-    //                              0.f, std::plus<float>(), 
+    //                              0.f, std::plus<float>(),
     //                              [](const float &fc, const float &gt)
     //                              {
     //                                  return std::sqrt((fc - gt) * (fc - gt));
@@ -243,4 +245,6 @@ float* Evaluate(const float* predictions,
     //std::cout << "MAE: " << MAE << std::endl
     //          << "MSE: " << MSE << std::endl;
     return finalcount;
+}
+
 }

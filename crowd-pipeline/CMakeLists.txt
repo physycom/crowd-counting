@@ -21,6 +21,7 @@ if (OPENMP_FOUND)
 endif()
 
 if(MSVC)
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 endif()
 
@@ -31,4 +32,3 @@ add_library(mrf SHARED
 
 set_property(TARGET mrf PROPERTY POSITION_INDEPENDENT_CODE ON)
 install(TARGETS mrf DESTINATION ${CMAKE_SOURCE_DIR}/lib/)
-
