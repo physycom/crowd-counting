@@ -9,7 +9,7 @@ tiny_w = 1024
 # Resize images
 file=sys.argv[1]
 im = cv2.imread(file)
-tiny_file=file.split(".")[0] + ".tiny.jpg"
+tiny_file=file.split(".")[0] + "_tiny.jpg"
 h, w, c = im.shape
 ratio = h/float(w)
 tiny_h = int(ratio * tiny_w)

@@ -12,6 +12,7 @@ inputmat = sys.argv[1]
 test_data = sci.loadmat(inputmat)
 n = int(test_data['features'].size/1000)
 X_test = test_data['features'].reshape(n, 1000)
+print(X_test.shape)
 print("Data loaded...")
 
 # load model
@@ -26,5 +27,5 @@ model.compile(optimizer='Adam', loss='mean_squared_error', metrics=['mean_absolu
 print("Model loaded...")
 
 # prediction
-predictions = model.predict(X_test, batch_size=1000, verbose=0)
-sci.savemat(inputmat.split(".")[0] + ".phase_1.mat", {'predictions':predictions})
+predictions = model.predict(X_test, batch_size=30, verbose=1)
+sci.savemat(inputmat.split(".")[0] + "_" + modelbasename.split("/")[-1] + ".phase_1.mat", {'predictions':predictions})

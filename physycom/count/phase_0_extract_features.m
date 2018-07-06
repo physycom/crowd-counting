@@ -25,6 +25,9 @@ if c == 1
   im = tmp;
 end
 
+%% courtesy output
+fprintf('Patches : %dx%d\n', round(h/steph), round(w/stepw));
+
 %% extract patches' features
 y = 1;
 row = 1;

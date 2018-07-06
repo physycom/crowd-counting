@@ -15,28 +15,29 @@ import numpy as np
 #   M is the number of the training image patches in formula (1);
 #   Y, the output of the fully connected regress network with the dimension of M x 1;
 def features2XY(features, counts):
-    n = 0
-    for c in counts:
-        n = n + c.size
+  n = 0
+  for c in counts:
+    n = n + c.size
 
-    X = np.zeros((n, 1000))
-    Y = np.zeros((n, 1))
-    k = 0
-    for (patch_feature, patch_count) in zip(features, counts):
-        X[k:k + patch_count.size, :] = patch_feature.reshape(patch_count.size, 1000)
-        Y[k:k + patch_count.size] = patch_count.reshape(patch_count.size, 1)
-        k = k + patch_count.size
+  X = np.zeros((n, 1000))
+  Y = np.zeros((n, 1))
+  k = 0
+  for (patch_feature, patch_count) in zip(features, counts):
+    X[k:k + patch_count.size, :] = patch_feature.reshape(patch_count.size, 1000)
+    Y[k:k + patch_count.size] = patch_count.reshape(patch_count.size, 1)
+    k = k + patch_count.size
 
-    return X, Y
+  return X, Y
 
 #%%
-data_mat = r'E:\Alessandro\Peoplebox\new\peoplebox_crowd_dataset\dataset_tiny.mat'
+data_mat = '/mnt/e/Alessandro/Peoplebox/new/peoplebox_crowd_dataset/dataset_tiny.mat'
+#data_mat = r'E:\Alessandro\Peoplebox\new\peoplebox_crowd_dataset\dataset_tiny.mat'
 data = sci.loadmat(data_mat)
 
 # for debugging only reduce dataset size
-#subsample = 20 # int(0.1*len(data['counts'].shape[1]))
-#data['counts'] = data['counts'][:,:subsample]
-#data['features'] = data['features'][:,:subsample]
+subsample = 400 # int(0.1*len(data['counts'].shape[1]))
+data['counts'] = data['counts'][:,:subsample]
+data['features'] = data['features'][:,:subsample]
 
 features = data['features'][0]
 counts = data['counts'][0]
@@ -58,25 +59,36 @@ train_idx = partition[k_test:]
 X_train, Y_train = features2XY(features[train_idx], counts[train_idx])
 X_test, Y_test = features2XY(features[validation_idx], counts[validation_idx])
 
-# define model
-model = Sequential()
-model.add(Dense(100, input_dim=1000, activation='relu'))
-model.add(Dense(50, activation='relu'))
-model.add(Dense(1, activation='relu'))
-model.compile(optimizer='Adam',
-                loss='mean_squared_error',
-                metrics=['mean_absolute_error'])
+# select a model
+model_tag="5strati"
+if model_tag == "5strati":
+  model = Sequential()
+  model.add(Dense(100, input_dim=1000))
+  model.add(Dense(100))
+  model.add(Dense(50, activation='relu'))
+  model.add(Dense(50, activation='relu'))
+  model.add(Dense(1, activation='relu'))
+  model.compile(optimizer='Adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
+elif model_tag == "3strati":
+  model = Sequential()
+  model.add(Dense(100, input_dim=1000, activation='relu'))
+  model.add(Dense(50, activation='relu'))
+  model.add(Dense(1, activation='relu'))
+  model.compile(optimizer='Adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
+
 print(model.summary())
 
 # train model
-model.fit(X_train, Y_train, epochs=100, batch_size=100, validation_split=0.1)
+model.fit(X_train, Y_train, epochs=15, batch_size=1000, validation_split=0.25, verbose=0)
+result = model.evaluate(X_train, Y_train, batch_size=200, verbose=1, sample_weight=None)
+print(result)
 result = model.evaluate(X_test, Y_test, batch_size=200, verbose=1, sample_weight=None)
 print(result)
 
 # dump model and weights
-model_tag = "100501"
-model_basename = r'E:\Alessandro\Codice\crowd-counting\physycom\train\model_' + tag
+model_basename = '/mnt/e/Alessandro/Codice/crowd-counting/physycom/model/model_' + model_tag
+#model_basename = r'E:\Alessandro\Codice\crowd-counting\physycom\train\model_' + model_tag
 model_json = model.to_json()
 with open(model_basename + ".json", "w") as json_file:
-    json_file.write(model_json)
+  json_file.write(model_json)
 model.save_weights(model_basename + ".h5")

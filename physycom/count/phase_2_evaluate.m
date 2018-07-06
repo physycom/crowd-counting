@@ -1,12 +1,12 @@
 SW_VER_CROWD = 100;
 
-
 addpath(strcat(getenv('WORKSPACE'), '/crowd-counting/MRF')); % matconvnet mex components
-MRFParams = single([105 200 1.0]);% Shanghaitech Part_A
-%MRFParams = single([200 200 8]);% Shanghaitech Part_B
+%MRFParams = single([105 200 1.0]);    % Shanghaitech Part_A
+%MRFParams = single([200 200 8]);      % Shanghaitech Part_B
+MRFParams = single([3500 1000 0.85]); % UCF
 
-load([base '.phase_0.mat']);
-load([base '.phase_1.mat']);
+load([base0 '.phase_0.mat']);
+load([base1 '.phase_1.mat']);
 
 %%
 [height, width, mille] = size(features);
@@ -36,12 +36,12 @@ end
 
 finalcount = sum(sum(C));
 
-disp(finalcount)
+fprintf("Final count : %d\n",finalcount)
 
-tok = strsplit(base, '_');
+tok = strsplit(base0, '_');
 loctag = tok{1};
 timestamp = tok{2};
-jsonout = strcat(base, '.json');
+jsonout = strcat(base1, '.json');
 info_json = fopen(jsonout,'w');
 fprintf(info_json, '{\n');
 fprintf(info_json, '\t\"frame_00000\" : {\n');
