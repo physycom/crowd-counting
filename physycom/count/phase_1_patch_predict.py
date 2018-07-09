@@ -10,9 +10,9 @@ if len(sys.argv) != 3:
 
 inputmat = sys.argv[1]
 test_data = sci.loadmat(inputmat)
+print("*************",test_data['features'].shape)
 n = int(test_data['features'].size/1000)
 X_test = test_data['features'].reshape(n, 1000)
-print(X_test.shape)
 print("Data loaded...")
 
 # load model
@@ -29,3 +29,17 @@ print("Model loaded...")
 # prediction
 predictions = model.predict(X_test, batch_size=30, verbose=1)
 sci.savemat(inputmat.split(".")[0] + "_" + modelbasename.split("/")[-1] + ".phase_1.mat", {'predictions':predictions})
+
+# prediction in json format
+#sci.loadmat('')
+import json
+pred = {
+         'width' : test_data['features'].shape[1],
+         'height' : test_data['features'].shape[0],
+         'patch_count' : predictions.tolist(),
+         #'patch_count' : np.asarray([1,2,3]).tolist(),
+         'dummy' : 1
+       }
+predj = json.dumps(pred)
+with open(inputmat.split(".")[0] + "_" + modelbasename.split("/")[-1] + ".phase_1.json","w") as f:
+  f.write(predj)
