@@ -40,12 +40,22 @@ fi
 # phase 3
 if [[ "$2" = *"3"* ]]; then
   echo "Composing csv..."
-  echo "model;count" > ${base}_compare.csv
-  for json in $base*.json;do
+  echo "model;count;gt;err;relative" > ${base}_compare.csv
+  gtname=${base%_*}
+  echo ${gtname}_count.csv
+  if [ -f ${gtname}_count.csv ]; then
+    gt=$(cat  ${gtname}_count.csv | wc -l)
+  else
+    gt=0
+  fi
+  for json in $base*.json; do
     model=${json%%.*}
     model=${model##*_}
     echo -n $model";"
-    cat $json | grep -oP "(?<=\"count\" : ).+(?=}],)"
+    count=$(cat $json | grep -oP "(?<=\"count\" : ).+(?=}],)")
+    err=$(($gt-$count))
+    rel=$(echo "scale=3; $err/$gt" | bc -l)
+    echo "$count;$gt;$err;$rel"
   done >> ${base}_compare.csv
   echo "DONE!"
 fi
