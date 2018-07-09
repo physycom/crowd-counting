@@ -13,13 +13,18 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 find_package(Matlab COMPONENTS MX_LIBRARY REQUIRED)
-find_package(OpenMP REQUIRED)
+#find_package(OpenMP REQUIRED)
 
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
 #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4146 /wd4305 /wd4334 /wd4267")
 endif()
 
-matlab_add_mex(NAME ${target_name} SRC ${target_name}/${target_name}.cpp)
+add_library(mrf_core ${CMAKE_SOURCE_DIR}/${target_name}/${target_name}_core.cpp)
+set_property(TARGET mrf_core PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_executable(physycom_mrf ${CMAKE_SOURCE_DIR}/${target_name}/${target_name}_physycom.cpp)
+target_link_libraries(physycom_mrf mrf_core)
+install(TARGETS physycom_mrf DESTINATION ${CMAKE_SOURCE_DIR}/${target_name}/)
 
+matlab_add_mex(NAME ${target_name} SRC ${target_name}/${target_name}.cpp LINK_TO mrf_core)
 install(TARGETS ${target_name} DESTINATION ${CMAKE_SOURCE_DIR}/${target_name}/)
