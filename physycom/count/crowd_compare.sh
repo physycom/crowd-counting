@@ -50,7 +50,7 @@ if [[ "$2" = *"3"* ]]; then
   fi
   for json in $base*.json; do
     model=${json%%.*}
-    model=${model##*_}
+    model=$(echo $model | grep -oP "(?<=model_).+")
     echo -n $model";"
     count=$(cat $json | grep -oP "(?<=\"count\" : ).+(?=}],)")
     err=$(($gt-$count))
