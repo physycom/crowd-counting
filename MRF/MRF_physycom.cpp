@@ -25,21 +25,30 @@ int main(int argc, char **argv)
   cout << "Height : " << height << endl;
   cout << "Size   : " << pred.size() << endl;
 
-	image<uchar> *img = new image<uchar>(width, height, true);
-  for (int i = 0; i < width; i++)
-    for(int j = 0; j < height; j++)
-//      imRef(img, i, j) = pred[i + width*j];
+	image<uchar> *img = new image<uchar>(width, height);
 
-	image<uchar> *out = restore_ms(img);
+  for (int i = 0; i < width; ++i)
+    for(int j = 0; j < height; ++j)
+      imRef(img, i, j) = pred[i + width*j];
 
-  for (int i = 0; i < height; i++)
+  cout << "Predictions" << endl;
+  for(int j = 0; j < height; ++j)
   {
-    for(int j = 0; j < width; j++)
+    for (int i = 0; i < width; ++i)
       //cout << pred[i + height*j] << " ";
-      cout << imRef(img, i, j) << " ";
+      cout << int(imRef(img, i, j)) << " ";
     cout << endl;
   }
 
+  image<uchar> *out = restore_ms(img);
+
+  cout << "MRF" << endl;
+  for(int j = 0; j < height; ++j)
+  {
+    for (int i = 0; i < width; ++i)
+      cout << int(imRef(out, i, j)) << " ";
+    cout << endl;
+  }
 
 	return 0;
 }

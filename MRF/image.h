@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 
 template <class T>
 class image {
- public:
+public:
   /* create an image */
   image(const int width, const int height, const bool init = true);
 
@@ -50,7 +50,7 @@ class image {
   /* row pointers. */
   T **access;
 
- private:
+private:
   int w, h;
 };
 
@@ -88,7 +88,6 @@ void image<T>::init(const T &val) {
   while (ptr <= end)
     *ptr++ = val;
 }
-
 
 template <class T>
 image<T> *image<T>::copy() const {
