@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.10)
 project (MRF)
 set(target_name "MRF")
+set(CMAKE_CXX_STANDARD 11)
 
 # make sure that the default is a RELEASE
 set(default_build_type "Release")
@@ -14,6 +15,7 @@ endif()
 
 find_package(Matlab COMPONENTS MX_LIBRARY REQUIRED)
 #find_package(OpenMP REQUIRED)
+include_directories(${CMAKE_SOURCE_DIR}/MRF/jsoncons/include)
 
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE)

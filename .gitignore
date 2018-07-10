@@ -26,9 +26,9 @@ bld/
 [Oo]bj/
 .snakemake/
 benchmark/
+physycom_mrf
 
 # Data
 *_*.json
-=======
 *.jpg
 *.png

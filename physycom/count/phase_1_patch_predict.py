@@ -36,7 +36,7 @@ import json
 pred = {
          'width' : test_data['features'].shape[1],
          'height' : test_data['features'].shape[0],
-         'patch_count' : predictions.tolist(),
+         'patch_count' : predictions.T.tolist()[0],
          #'patch_count' : np.asarray([1,2,3]).tolist(),
          'dummy' : 1
        }

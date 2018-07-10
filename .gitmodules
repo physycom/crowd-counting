@@ -4,3 +4,6 @@
 [submodule "UCF_CCD"]
 	path = UCF_CCD
 	url = https://github.com/cenit/UCF_CCD
+[submodule "MRF/jsoncons"]
+	path = MRF/jsoncons
+	url = https://github.com/danielaparker/jsoncons
