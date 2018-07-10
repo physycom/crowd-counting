@@ -3,6 +3,10 @@
 
 using namespace std;
 
+extern float DISC_K;      // truncation of discontinuity cost
+extern float DATA_K;      // truncation of data cost
+extern float LAMBDA;      // weighting of data cost
+
 int main(int argc, char **argv)
 {
   std::string pred_file;
@@ -44,26 +48,33 @@ int main(int argc, char **argv)
     imRef(img, width-1, j) = imRef(img, width-2, j);
   }
 
-  cout << "Predictions" << endl;
-  for(int j = 0; j < height; ++j)
-  {
-    for (int i = 0; i < width; ++i)
-      cout << int(imRef(img, i, j)) << " ";
-    cout << endl;
-  }
+//  cout << "Predictions" << endl;
+//  for(int j = 0; j < height; ++j)
+//  {
+//    for (int i = 0; i < width; ++i)
+//      cout << int(imRef(img, i, j)) << " ";
+//    cout << endl;
+//  }
 
   DISC_K = 200.0;
   DATA_K = 200.0;
   LAMBDA = 1.0;
   image<uchar> *out = restore_ms(img);
 
-  cout << "MRF" << endl;
-  for(int j = 0; j < height; ++j)
-  {
-    for (int i = 0; i < width; ++i)
-      cout << int(imRef(out, i, j)) << " ";
-    cout << endl;
-  }
+//  cout << "MRF" << endl;
+//  for(int j = 0; j < height; ++j)
+//  {
+//    for (int i = 0; i < width; ++i)
+//      cout << int(imRef(out, i, j)) << " ";
+//    cout << endl;
+//  }
+
+
+  int finalcount = 0;
+  for (int i = 1; i < width-2; i+=2)
+    for(int j = 1; j < height-2; j+=2)
+      finalcount += imRef(out, i, j);
+  cout << "Final count : " << finalcount << endl;
 
 
 
