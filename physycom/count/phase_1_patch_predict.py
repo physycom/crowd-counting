@@ -26,19 +26,17 @@ model.load_weights(modelbasename + ".h5")
 model.compile(optimizer='Adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
 print("Model loaded...")
 
-# prediction
+# prediction matlab format
 predictions = model.predict(X_test, batch_size=30, verbose=1)
 sci.savemat(inputmat.split(".")[0] + "_" + modelbasename.split("/")[-1] + ".phase_1.mat", {'predictions':predictions})
 
-# prediction in json format
+# prediction json format
 #sci.loadmat('')
 import json
 pred = {
          'width' : test_data['features'].shape[1],
          'height' : test_data['features'].shape[0],
-         'patch_count' : predictions.T.tolist()[0],
-         #'patch_count' : np.asarray([1,2,3]).tolist(),
-         'dummy' : 1
+         'patch_count' : predictions.T.tolist()[0]
        }
 predj = json.dumps(pred)
 with open(inputmat.split(".")[0] + "_" + modelbasename.split("/")[-1] + ".phase_1.json","w") as f:

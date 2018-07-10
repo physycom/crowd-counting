@@ -28,10 +28,10 @@ C = p;
 C(2:2:(row - 1), :) = 0;
 C(:, 2 : 2 : (column - 1)) = 0;
 if mod(row, 2) == 0
-    C(row, :) = C(row, :) / 2;
+  C(row, :) = C(row, :) / 2;
 end
 if mod(column, 2) == 0
-    C(:, column) = C(:, column) / 2;
+  C(:, column) = C(:, column) / 2;
 end
 
 finalcount = sum(sum(C));

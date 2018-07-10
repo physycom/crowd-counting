@@ -25,21 +25,36 @@ int main(int argc, char **argv)
   cout << "Height : " << height << endl;
   cout << "Size   : " << pred.size() << endl;
 
-	image<uchar> *img = new image<uchar>(width, height);
+	image<uchar> *img = new image<uchar>(width+2, height+2);
 
-  for (int i = 0; i < width; ++i)
-    for(int j = 0; j < height; ++j)
+  // fill the bulk
+  for (int i = 1; i < width-1; ++i)
+    for(int j = 1; j < height-1; ++j)
       imRef(img, i, j) = pred[i + width*j];
+
+  // fill the boundary
+  for (int i = 1; i < width-1; ++i)
+  {
+    imRef(img, i, 0)        = imRef(img, i, 1);
+    imRef(img, i, height-1) = imRef(img, i, height-2);
+  }
+  for(int j = 0; j < height; ++j)
+  {
+    imRef(img, 0, j)       = imRef(img, 1, j);
+    imRef(img, width-1, j) = imRef(img, width-2, j);
+  }
 
   cout << "Predictions" << endl;
   for(int j = 0; j < height; ++j)
   {
     for (int i = 0; i < width; ++i)
-      //cout << pred[i + height*j] << " ";
       cout << int(imRef(img, i, j)) << " ";
     cout << endl;
   }
 
+  DISC_K = 200.0;
+  DATA_K = 200.0;
+  LAMBDA = 1.0;
   image<uchar> *out = restore_ms(img);
 
   cout << "MRF" << endl;
@@ -49,6 +64,8 @@ int main(int argc, char **argv)
       cout << int(imRef(out, i, j)) << " ";
     cout << endl;
   }
+
+
 
 	return 0;
 }
