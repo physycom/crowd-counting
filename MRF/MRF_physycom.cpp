@@ -7,6 +7,8 @@ extern float DISC_K;      // truncation of discontinuity cost
 extern float DATA_K;      // truncation of data cost
 extern float LAMBDA;      // weighting of data cost
 
+#define SW_VER     123
+
 int main(int argc, char **argv)
 {
   std::string pred_file;
@@ -48,35 +50,34 @@ int main(int argc, char **argv)
     imRef(img, width-1, j) = imRef(img, width-2, j);
   }
 
-//  cout << "Predictions" << endl;
-//  for(int j = 0; j < height; ++j)
-//  {
-//    for (int i = 0; i < width; ++i)
-//      cout << int(imRef(img, i, j)) << " ";
-//    cout << endl;
-//  }
-
-  DISC_K = 200.0;
-  DATA_K = 200.0;
-  LAMBDA = 1.0;
+  DISC_K = 3500.0f;
+  DATA_K = 1000.0f;
+  LAMBDA = 0.85f;
   image<uchar> *out = restore_ms(img);
-
-//  cout << "MRF" << endl;
-//  for(int j = 0; j < height; ++j)
-//  {
-//    for (int i = 0; i < width; ++i)
-//      cout << int(imRef(out, i, j)) << " ";
-//    cout << endl;
-//  }
-
 
   int finalcount = 0;
   for (int i = 1; i < width-2; i+=2)
     for(int j = 1; j < height-2; j+=2)
       finalcount += imRef(out, i, j);
-  cout << "Final count : " << finalcount << endl;
 
+  cout << "Count  : " << finalcount << endl;
 
+  string info_name = pred_file.substr(0,pred_file.find_first_of(".")) + ".json_physycom";
+  cout << "Output : " << info_name << endl;
+  string timestamp = "12345";
+  string loctag = "fake";
+  ofstream info_json(info_name);
+  info_json << "{\n";
+  info_json << "\t\"frame_00000\" : {\n";
+  info_json << "\t\t\"timestamp\" : " << timestamp << ",\n";
+  info_json << "\t\t\"id_box\" : \"location\",\n";
+  info_json << "\t\t\"detection\" : \"crowd3\",\n";
+  info_json << "\t\t\"sw_ver\" : " << SW_VER << ",\n";
+  info_json << "\t\t\"people_count\" : [{\"id\" : \"" << loctag << "\", \"count\" : " << finalcount << "}],\n";
+  info_json << "\t\t\"diagnostics\" : [{\"id\" : \"coming\", \"value\" : \"soon\"}]\n";
+  info_json << "\t}\n";
+  info_json << "}";
+  info_json.close();
 
 	return 0;
 }
