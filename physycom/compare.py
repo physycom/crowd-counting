@@ -59,7 +59,6 @@ def save_results(res, y_label, title, out_name):
   plt.savefig(out_name, dpi=200)
   plt.gcf().clear()
 
-
 save_results( rmse, 'RMSE',            'Root Mean Squared Error for various dataset',  'compare_RMSE.png')
 save_results(  mae,  'MAE',                'Mean Absolute Error for various dataset',   'compare_MAE.png')
 save_results(nrmse, 'RMSE', 'Normalized Root Mean Squared Error for various dataset', 'compare_NRMSE.png')
