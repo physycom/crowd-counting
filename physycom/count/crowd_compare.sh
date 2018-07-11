@@ -50,6 +50,7 @@ if [[ "$2" = *"3"* ]]; then
     gt=0
   fi
   for json in ${base}_*.json; do
+    [[ "$json" == *".phase_1."* ]] && continue # to skip other json produced
     model=${json%%.*}
     model=$(echo $model | grep -oP "(?<=_model_).+")
     echo -n $model";"

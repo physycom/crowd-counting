@@ -10,10 +10,8 @@ if len(sys.argv) != 3:
 
 inputmat = sys.argv[1]
 test_data = sci.loadmat(inputmat)
-print("*************",test_data['features'].shape)
 n = int(test_data['features'].size/1000)
 X_test = test_data['features'].reshape(n, 1000)
-print("Data loaded...")
 
 # load model
 modelbasename = sys.argv[2]
@@ -24,10 +22,9 @@ model = model_from_json(modj)
 # load weights
 model.load_weights(modelbasename + ".h5")
 model.compile(optimizer='Adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
-print("Model loaded...")
 
 # prediction matlab format
-predictions = model.predict(X_test, batch_size=30, verbose=1)
+predictions = model.predict(X_test, batch_size=30, verbose=0)
 sci.savemat(inputmat.split(".")[0] + "_" + modelbasename.split("/")[-1] + ".phase_1.mat", {'predictions':predictions})
 
 # prediction json format
