@@ -14,7 +14,7 @@ p = reshape(predictions, width, height);
 
 % The marginal data of the predicted count matrix is 0 after apply MRF,
 % so first extending the predicted count matrix by copy marginal data.
-p = uint8(p)';
+p = uint16(p)';
 p = [p(1,:); p];
 p = [p ;p(end,:)];
 p = [p(:, 1) p];
@@ -35,7 +35,6 @@ if mod(column, 2) == 0
 end
 
 finalcount = sum(sum(C));
-
 fprintf("Final count : %d\n",finalcount)
 
 tok = strsplit(base0, '_');

@@ -8,21 +8,25 @@ photo_dir=["SHT_photo", "VEN_photo", "STUD_photo", "UCF_photo"]
 
 results = {}
 normres = {}
+check_mrf = {}
 for pdir in photo_dir:
   dataset=pdir.split("_")[0]
   results[dataset] = {}
   normres[dataset] = {}
+  check_mrf[dataset] = {}
   for file in os.listdir(prefix + pdir):
     if file.endswith("_compare.csv"):
       #print("FILE ",file)
       data = pd.read_csv(prefix + pdir + "/" + file, sep=';')
       for _, row in data.iterrows():
         if row['model'] in results[dataset].keys():
-          results[dataset][row['model']] += [row['err']]
-          normres[dataset][row['model']] += [row['err']/row['gt']]
+          results[dataset][row['model']]   += [row['err']]
+          normres[dataset][row['model']]   += [row['err']/row['gt']]
+          check_mrf[dataset][row['model']] += row['count'] - row['physycom']
         else:
-          results[dataset][row['model']] = [row['err']]
-          normres[dataset][row['model']] = [row['err']/row['gt']]
+          results[dataset][row['model']]   = [row['err']]
+          normres[dataset][row['model']]   = [row['err']/row['gt']]
+          check_mrf[dataset][row['model']] = row['count'] - row['physycom']
 
 # collect results
 rmse = {}
@@ -59,7 +63,8 @@ def save_results(res, y_label, title, out_name):
   plt.savefig(out_name, dpi=200)
   plt.gcf().clear()
 
-save_results( rmse, 'RMSE',            'Root Mean Squared Error for various dataset',  'compare_RMSE.png')
-save_results(  mae,  'MAE',                'Mean Absolute Error for various dataset',   'compare_MAE.png')
-save_results(nrmse, 'RMSE', 'Normalized Root Mean Squared Error for various dataset', 'compare_NRMSE.png')
-save_results( nmae, 'RMSE',     'Normalized Mean Absolute Error for various dataset',  'compare_NMAE.png')
+save_results( rmse,      'RMSE',            'Root Mean Squared Error for various dataset',  'compare_RMSE.png')
+save_results(  mae,       'MAE',                'Mean Absolute Error for various dataset',   'compare_MAE.png')
+save_results(nrmse,      'RMSE', 'Normalized Root Mean Squared Error for various dataset', 'compare_NRMSE.png')
+save_results( nmae,      'RMSE',     'Normalized Mean Absolute Error for various dataset',  'compare_NMAE.png')
+save_results( check_mrf,  'Err',                 'Comparison original MRF vs CPP porting',   'compare_MRF.png')

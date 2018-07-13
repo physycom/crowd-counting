@@ -40,7 +40,7 @@ fi
 # phase 3
 if [[ "$2" = *"3"* ]]; then
   echo "Composing csv..."
-  echo "model;count;gt;err;relative" > ${base}_compare.csv
+  echo "model;count;physycom;gt;err;relative" > ${base}_compare.csv
   gtname=$base
   #gtname=${base%_*}
   echo ${gtname}_count.csv
@@ -55,9 +55,10 @@ if [[ "$2" = *"3"* ]]; then
     model=$(echo $model | grep -oP "(?<=_model_).+")
     echo -n $model";"
     count=$(cat $json | grep -oP "(?<=\"count\" : ).+(?=}],)")
+    physycom=$(cat ${json}_physycom | grep -oP "(?<=\"count\" : ).+(?=}],)")
     err=$(($gt-$count))
     rel=$(echo "scale=3; $err/$gt" | bc -l)
-    echo "$count;$gt;$err;$rel"
+    echo "$count;$physycom;$gt;$err;$rel"
   done >> ${base}_compare.csv
   echo "DONE!"
 fi
