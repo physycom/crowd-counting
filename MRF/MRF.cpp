@@ -68,7 +68,7 @@ void mexFunction(
 
     //copy data to result
     uchar *result;
-    plhs[0] = mxCreateNumericMatrix(height, width, mxUINT8_CLASS, mxREAL);
+    plhs[0] = mxCreateNumericMatrix(height, width, mxUINT16_CLASS, mxREAL);
     result = (uchar*) mxGetPr(plhs[0]);
     for (int i = 0; i < width; i++){
         for(int j = 0; j < height; j++){

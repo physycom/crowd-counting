@@ -2,6 +2,10 @@
 #include <cstring>
 #include "MRF_core.h"
 
+
+#include <iomanip>
+
+
 using namespace std;
 
 float DISC_K = 3000.0;      // truncation of discontinuity cost

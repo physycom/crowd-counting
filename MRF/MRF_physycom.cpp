@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
   int width = jpred["width"].as<int>();
   int height = jpred["height"].as<int>();
-  auto pred = jpred["patch_count"].as<std::vector<int>>();
+  auto pred = jpred["patch_count"].as<std::vector<float>>();
   cout << "Width  : " << width << endl;
   cout << "Height : " << height << endl;
   cout << "Size   : " << pred.size() << endl;
@@ -34,20 +34,22 @@ int main(int argc, char **argv)
 	image<uchar> *img = new image<uchar>(width+2, height+2);
 
   // fill the bulk
-  for (int i = 1; i < width-1; ++i)
-    for(int j = 1; j < height-1; ++j)
-      imRef(img, i, j) = pred[i + width*j];
+  for (int i = 0; i < width; ++i)
+    for(int j = 0; j < height; ++j)
+//      imRef(img, i, j) = pred[(j-1) + height*(i-1)];
+      imRef(img, i+1, j+1) = uchar(pred[i + width*j] + 0.5f);
+      //imRef(img, i, j) = pred[i + width*j];
 
   // fill the boundary
-  for (int i = 1; i < width-1; ++i)
-  {
-    imRef(img, i, 0)        = imRef(img, i, 1);
-    imRef(img, i, height-1) = imRef(img, i, height-2);
-  }
-  for(int j = 0; j < height; ++j)
+  for(int j = 1; j < height+1; ++j)
   {
     imRef(img, 0, j)       = imRef(img, 1, j);
-    imRef(img, width-1, j) = imRef(img, width-2, j);
+    imRef(img, width+1, j) = imRef(img, width, j);
+  }
+  for (int i = 0; i < width+2; ++i)
+  {
+    imRef(img, i, 0)        = imRef(img, i, 1);
+    imRef(img, i, height+1) = imRef(img, i, height);
   }
 
   DISC_K = 3500.0f;
@@ -56,9 +58,15 @@ int main(int argc, char **argv)
   image<uchar> *out = restore_ms(img);
 
   int finalcount = 0;
-  for (int i = 1; i < width-2; i+=2)
-    for(int j = 1; j < height-2; j+=2)
+  for (int i = 1; i < width+1; i+=2)
+    for(int j = 1; j < height+1; j+=2)
       finalcount += imRef(out, i, j);
+  if (width%2==0)
+    for(int j = 1; j < height+1; j+=2)
+      finalcount += uchar((imRef(out, width, j)/2.f) + 0.5f);
+  if (height%2==0)
+    for(int i = 1; i < width+1; i+=2)
+      finalcount += uchar((imRef(out, i, height)/2.f) + 0.5f);
 
   cout << "Count  : " << finalcount << endl;
 
